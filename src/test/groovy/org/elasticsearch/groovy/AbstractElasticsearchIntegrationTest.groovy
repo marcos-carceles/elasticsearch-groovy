@@ -19,12 +19,8 @@
 package org.elasticsearch.groovy
 
 import groovy.transform.CompileStatic
-import org.apache.lucene.util.AbstractRandomizedTest
-import org.elasticsearch.common.collect.ImmutableSet
-import org.elasticsearch.test.ElasticsearchIntegrationTest
 
-import java.lang.reflect.Field
-import java.lang.reflect.Modifier
+import org.elasticsearch.test.ElasticsearchIntegrationTest
 
 /**
  * The basis for all Groovy client test classes that require a running Elasticsearch cluster / client (integration
@@ -38,37 +34,5 @@ abstract class AbstractElasticsearchIntegrationTest extends ElasticsearchIntegra
      */
     static {
         assert GroovyTestSanitizer.groovySanitized
-        acceptGroovyNonIndyFields()
-    }
-
-    private static final List<String> groovyNonIndyFields = ['$callSiteArray']
-
-    static void acceptGroovyNonIndyFields() {
-        // this corresponds to a Set<String>
-        Field field = AbstractRandomizedTest.getDeclaredField('STATIC_LEAK_IGNORED_TYPES')
-
-        // the field is private static, so this allows us to mess with it
-        field.accessible = true
-
-        // the field is also final, so we need to remove that
-        Field modifiersField = Field.class.getDeclaredField("modifiers")
-        modifiersField.accessible = true
-        modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL)
-
-        // read the field
-        Set<String> staticLeakIgnoreTypes = (Set<String>)field.get(null)
-        // replace the field: add our own class to it, then replace it
-        ImmutableSet.Builder<String> acceptedTypes = ImmutableSet.builder().addAll(staticLeakIgnoreTypes)
-        groovyNonIndyFields.each {
-            acceptedTypes.add(AbstractElasticsearchIntegrationTest.getDeclaredField(it).type.name)
-        }
-        field.set(null, acceptedTypes.build())
-
-        // reset it as final
-        modifiersField.setInt(field, field.getModifiers() | Modifier.FINAL)
-        modifiersField.accessible = false
-
-        // reset it as private
-        field.accessible = false
     }
 }

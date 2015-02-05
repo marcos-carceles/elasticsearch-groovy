@@ -78,6 +78,9 @@ class GroovyTestSanitizer {
      * It can be used as many times as
      */
     private static class GroovyTestSanitizerSingleton {
+
+        private static final List<String> groovyNonIndyFields = ['$callSiteArray']
+
         /**
          * Currently, this modifies {@link AbstractRandomizedTest} to add {@link ClassInfo} to the set of known
          * static leak types to be ignored.
@@ -97,7 +100,11 @@ class GroovyTestSanitizer {
             // read the field
             Set<String> staticLeakIgnoreTypes = (Set<String>)field.get(null)
             // replace the field: add our own class to it, then replace it
-            field.set(null, ImmutableSet.builder().addAll(staticLeakIgnoreTypes).add(ClassInfo.class.name).build())
+            ImmutableSet.Builder<String> acceptedTypes = ImmutableSet.builder().addAll(staticLeakIgnoreTypes).add(ClassInfo.class.name)
+            groovyNonIndyFields.each {
+                acceptedTypes.add(AbstractElasticsearchIntegrationTest.getDeclaredField(it).type.name)
+            }
+            field.set(null, acceptedTypes.build())
 
             // reset it as final
             modifiersField.setInt(field, field.getModifiers() | Modifier.FINAL)
