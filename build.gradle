@@ -163,7 +163,7 @@ tasks.withType(GroovyCompile) {
   // Enable the usage of invokedynamic instructions in compiled Groovy code
   // NOTE: This requires the "indy" version of the Groovy jar to take effect _and_ this is the reason that Java 7u60
   //  or later is required by the Groovy client.
-  groovyOptions.optimizationOptions.indy = true
+  groovyOptions.optimizationOptions.indy = false
 }
 
 /**
